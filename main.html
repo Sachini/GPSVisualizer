@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>GPS Visualizer</title>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+            height: 90%;
+            width: 100%;
+        }
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .legend {
+            width:100px;
+            height:20px;
+            border:1px;
+            color: white;
+            float: right
+        }
+    </style>
+</head>
+<body>
+<div>
+<div style="width:50%; float: left">
+    <input type="file" id="files" name="files[]" multiple />
+    <output id="list"></output>
+    <button id="load" disabled>Load</button>
+</div>
+<div style="width:30%; float: left">
+    <div class="legend" style="background:#831958">NETWORK</div>
+    <div class="legend" style="background:#008000">GPS</div>
+</div>
+</div>
+<div id="map" ></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+</script>
+<script>
+    var file;
+    var path = [];
+    var map;
+    var pathCord = [];
+
+    function initMap() {
+        // Create the map.
+        console.log("Loading Map...");
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 50,
+            center: path[0].center,
+            mapTypeId: 'satellite'
+        });
+
+        var icons = {
+            0: {
+                icon:{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#831958',
+                    fillOpacity: 0.6,
+                    strokeColor: '#831958',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 2
+                }
+            },
+            1: {
+                icon:{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#008000',
+                    fillOpacity: 0.6,
+                    strokeColor: '#008000',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 2
+                }
+            }
+        };
+
+        // Construct the circle for each value in citymap.
+        // Note: We scale the area of the circle based on the population.
+        for (var location in path) {
+            // Add the circle for this city to the map.
+            var marker = new google.maps.Marker({
+                position: path[location].center,
+                map: map,
+                icon: icons[path[location].type].icon
+            });
+
+            var cityCircle = new google.maps.Circle({
+                strokeColor: '#0000FF',
+                strokeOpacity: 0.2,
+                strokeWeight: 1,
+                fillColor: '#0000FF',
+                fillOpacity: 0.05,
+                map: map,
+                center: path[location].center,
+                radius: path[location].accuracy
+            });
+        }
+
+        // construct path
+         var flightPath = new google.maps.Polyline({
+             path: pathCord,
+             geodesic: true,
+             strokeColor: '#000000',
+             strokeOpacity: 1,
+             strokeWeight: 0.5
+         });
+
+         flightPath.setMap(map);
+    }
+
+    function handleFileSelect(evt) {
+        path.length = 0;
+        pathCord.length = 0;
+
+        var files = evt.target.files; // FileList object
+        file = files[0];
+
+        var reader = new FileReader();
+        reader.onload = function(){
+            var text = reader.result;
+            var lines = text.split('\n');
+            //alert(lines.length);
+            for(var i=0; i<lines.length; i++){
+                if(lines[i].trim().charAt(0) == "#" || lines[i].trim().length == 0) {
+                    continue;
+                } else {
+                    console.log(lines[i]);
+                    var values = lines[i].split(' ');
+                    path.push({
+                        center: {lat:parseFloat(values[1]), lng:parseFloat(values[2])},
+                        accuracy: parseFloat(values[4]),
+                        type: values[5]=="network"?0:1,
+                        time: values[0]
+                    });
+                }
+            }
+            console.log("Done");
+
+            path.sort(function(a,b) {
+                return parseInt(a.time) - parseInt(b.time);
+            });
+            pathCord = path.map( function(a) { return a.center});
+            document.getElementById("load").disabled = false;
+        };
+        reader.readAsText(file);
+    }
+
+    function loadMap(evt){
+        console.log(path);
+        initMap();
+    }
+
+    document.getElementById('files').addEventListener('change', handleFileSelect, false);
+    document.getElementById('load').addEventListener('click', loadMap, false);
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJUVw8yMuyfblsKb50iyx52uP5uFJMobk">
+</script>
+</body>
+</html>
