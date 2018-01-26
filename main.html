@@ -47,17 +47,19 @@
     var path = [];
     var map;
     var pathCord = [];
+    var icons;
+    var firstCall = 0;
 
     function initMap() {
         // Create the map.
         console.log("Loading Map...");
         map = new google.maps.Map(document.getElementById('map'), {
-            zoom: 50,
+            zoom: 30,
             center: path[0].center,
-            mapTypeId: 'satellite'
+            mapTypeId: 'terrain'
         });
 
-        var icons = {
+        icons = {
             0: {
                 icon:{
                     path: google.maps.SymbolPath.CIRCLE,
@@ -66,7 +68,7 @@
                     strokeColor: '#831958',
                     strokeOpacity: 0.9,
                     strokeWeight: 1,
-                    scale: 2
+                    scale: 1.5
                 }
             },
             1: {
@@ -77,11 +79,16 @@
                     strokeColor: '#008000',
                     strokeOpacity: 0.9,
                     strokeWeight: 1,
-                    scale: 2
+                    scale: 1.5
                 }
             }
         };
 
+        firstCall = 1;
+
+    }
+
+    function updateMap(){
         // Construct the circle for each value in citymap.
         // Note: We scale the area of the circle based on the population.
         for (var location in path) {
@@ -89,8 +96,11 @@
             var marker = new google.maps.Marker({
                 position: path[location].center,
                 map: map,
-                icon: icons[path[location].type].icon
+                icon: icons[path[location].type].icon,
+                title: path[location].time
             });
+
+            marker.setMap(map);
 
             var cityCircle = new google.maps.Circle({
                 strokeColor: '#0000FF',
@@ -102,19 +112,32 @@
                 center: path[location].center,
                 radius: path[location].accuracy
             });
+
+            cityCircle.setMap(map);
         }
 
         // construct path
-         var flightPath = new google.maps.Polyline({
-             path: pathCord,
-             geodesic: true,
-             strokeColor: '#000000',
-             strokeOpacity: 1,
-             strokeWeight: 0.5
-         });
+        var color = getRandomColor();
+        var flightPath = new google.maps.Polyline({
+            path: pathCord,
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 1,
+            strokeWeight: 1
+        });
 
-         flightPath.setMap(map);
+        flightPath.setMap(map);
     }
+
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
 
     function handleFileSelect(evt) {
         path.length = 0;
@@ -149,13 +172,14 @@
             });
             pathCord = path.map( function(a) { return a.center});
             document.getElementById("load").disabled = false;
+            if(firstCall == 0) {initMap();}
         };
         reader.readAsText(file);
     }
 
     function loadMap(evt){
         console.log(path);
-        initMap();
+        updateMap();
     }
 
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
