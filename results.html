@@ -36,7 +36,7 @@
     <button id="load" disabled>Load</button>
 </div>
 <div style="width:30%; float: left">
-    <div class="legend" style="background:#831958">NETWORK</div>
+    <div class="legend" style="background:#831958">Location</div>
     <div class="legend" style="background:#008000">GPS</div>
 </div>
 </div>
@@ -50,6 +50,7 @@
     var pathCord = [];
     var icons;
     var firstCall = 0;
+    var i = 0;
 
     function initMap() {
         // Create the map.
@@ -97,7 +98,7 @@
             var marker = new google.maps.Marker({
                 position: path[location].center,
                 map: map,
-                icon: icons[0].icon,
+                icon: icons[i].icon,
                 title: path[location].time
             });
 
@@ -115,6 +116,7 @@
         });
 
         flightPath.setMap(map);
+        i = 1;
     }
 
     function getRandomColor() {
