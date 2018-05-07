@@ -39,7 +39,8 @@
 <div style="width:40%; float: left">
  	<div class="legend" style="color:black">Interval: 2 seconds</div>
     <div class="legend" style="background:#00FF00">GPS</div>
-    <div class="legend" style="background:#FF0000">Predicted</div>
+    <div class="legend" style="background:#FF0000">with gravity</div>
+    <div class="legend" style="background:#0000FF">w/o gravity</div>
 </div>
 <div id="map"></div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
@@ -48,9 +49,11 @@
     var file;
     var loc = [];
     var predicted = [];
+    var predicted2 = [];
     var map;
     var location_p = [];
     var predicted_p = [];
+    var predicted2_p = [];
     var icons;
     var firstCall = 0;
 
@@ -108,14 +111,14 @@
 		var i = 0;
         for (var location in path) {
             // Add the circle for this city to the map.
-			if (i%40 == 0){            
+			if (i%40 == 0){
 				var marker = new google.maps.Marker({
 		            position: path[location].center,
 		            map: map,
 		            icon: icons[n].icon,
 		            title: path[location].time
 		        });
-			
+
             	marker.setMap(map);
 			}
 			i++
@@ -171,6 +174,10 @@
                         center: {lat: parseFloat(values[3]), lng: parseFloat(values[4])},
                         time: values[0]
                     });
+                    predicted2.push({
+                        center: {lat: parseFloat(values[5]), lng: parseFloat(values[6])},
+                        time: values[0]
+                    });
                 }
             }
             console.log("Done");
@@ -180,6 +187,10 @@
             });
 
             predicted_p = predicted.map(function (a) {
+                return a.center
+            });
+
+            predicted2_p = predicted2.map(function (a) {
                 return a.center
             });
 
@@ -194,6 +205,7 @@
     function loadMap(evt) {
         //console.log(path);
         updateMap(loc, location_p, 0);
+        updateMap(predicted2, predicted2_p, 1);
         updateMap(predicted, predicted_p, 2);
     }
 
