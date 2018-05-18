@@ -108,14 +108,14 @@
 		var i = 0;
         for (var location in path) {
             // Add the circle for this city to the map.
-			if (i%40 == 0){            
+			if (i%40 == 0){
 				var marker = new google.maps.Marker({
 		            position: path[location].center,
 		            map: map,
 		            icon: icons[n].icon,
 		            title: path[location].time
 		        });
-			
+
             	marker.setMap(map);
 			}
 			i++
@@ -146,7 +146,7 @@
 
 
     function handleFileSelect(evt) {
-        location.length = 0;
+        loc.length = 0;
         predicted.length = 0;
         location_p.length = 0;
         predicted_p.length = 0;

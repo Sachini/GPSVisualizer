@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>GPS Multiple</title>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        .mymap {
+            top: 5px;
+            left: 5px;
+            width:210px;
+            height:220px;
+            float: left;
+            margin: 1px;
+        }
+
+        .map_name {
+          color: grey;
+            width:100%;
+            height:5px;
+            position: relative;
+            display:inline-block;
+        }
+
+        .gmap {
+          top: 5px;
+          width:100%;
+          height:95%;
+          position: relative;
+          display:inline-block;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .legend {
+            width: 150px;
+            height: 20px;
+            border: 1px;
+            color: white;
+            float: right
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div style="width:35%; float: left">
+        <input type="file" id="files" name="files[]" multiple/>
+        <output id="list"></output>
+        <button id="load" disabled>Load</button>
+    </div>
+</div>
+<div id="type" style="width:35%; float:left;">
+  <input type="radio" id="typeStep" name="type" value="Step"> Step
+  <input type="radio" id="typeWorld" name="type" value="World" checked> World
+  <input type="radio" id="typeStable" name="type" value="Stable"> Stable
+</div>
+<div style="width:30%; float: right">
+ 	<div class="legend" style="color:black">Interval: 2 seconds</div>
+    <div class="legend" style="background:#00FF00">GPS</div>
+    <!-- <div class="legend" style="background:#FF0000">Computed</div> -->
+</div>
+<div id="first" class="mymap" style="display: none;">
+  <div class="map_name"></div>
+  <div class="gmap"></div>
+</div>
+<div id="other" class="mymap" style="display: none;">
+  <div class="gmap"></div>
+</div>
+<div id="world" style="float:left; width: 100%">
+  <div style="float:left; width:3%; height:100%">"World"</div>
+</div>
+<div id="step" style="float:left; width: 100%">
+  <div style="float:left; width:3%; height:100%">"Step"</div>
+</div>
+<div id="stable" style="float:left; width: 100%">
+  <div style="float:left; width:3%; height:100%">"Stable"</div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+</script>
+<script>
+    var file;
+    var filename;
+    var loc = [];
+    var predicted = [];
+    var map;
+    var location_p = [];
+    var predicted_p = [];
+    var icons;
+    var w_map_id = 1
+    var s_map_id = 1
+    var step_map_id = 1
+    var worldDiv = document.getElementById("world");
+    var stableDiv = document.getElementById("stable");
+    var stepDiv = document.getElementById("step");
+
+    function initWorldMap(map_name) {
+        // Create the map.
+        console.log("Creating Map...");
+        console.log(map_name);
+        var div = document.getElementById('first');
+        clone = div.cloneNode(true); // true means clone all childNodes and all event handlers
+        clone.style.display = "block";
+        clone.id = map_name;
+        worldDiv.appendChild(clone);
+        clone.getElementsByClassName("map_name")[0].innerHTML = filename;
+        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
+            zoom: 15,
+            center: loc[0].center,
+            mapTypeId: 'terrain'
+        });
+
+        icons = {
+            0: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#00FF00',
+                    fillOpacity: 0.6,
+                    strokeColor: '#00FF00',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            },
+            1: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#FF0000',
+                    fillOpacity: 0.6,
+                    strokeColor: '#FF0000',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            },
+            2: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#0000FF',
+                    fillOpacity: 0.6,
+                    strokeColor: '#0000FF',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            },
+            3: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#9d10cc',
+                    fillOpacity: 0.6,
+                    strokeColor: '#9d10cc',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            }
+        };
+
+        w_map_id++
+    }
+
+    function initStepMap(map_name) {
+        // Create the map.
+        console.log("Creating Map...");
+        console.log(map_name);
+        var div = document.getElementById('other');
+        clone = div.cloneNode(true); // true means clone all childNodes and all event handlers
+        clone.style.display = "block";
+        clone.id = map_name;
+        stepDiv.appendChild(clone);
+        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
+            zoom: 15,
+            center: loc[0].center,
+            mapTypeId: 'terrain'
+        });
+        step_map_id++
+    }
+
+    function initStableMap(map_name) {
+        // Create the map.
+        console.log("Creating Map...");
+        console.log(map_name);
+        var div = document.getElementById('other');
+        clone = div.cloneNode(true); // true means clone all childNodes and all event handlers
+        clone.style.display = "block";
+        clone.id = map_name;
+        stableDiv.appendChild(clone);
+        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
+            zoom: 15,
+            center: loc[0].center,
+            mapTypeId: 'terrain'
+        });
+        s_map_id++
+    }
+
+    function updateMap(path, pathCord, n) {
+        // Construct the circle for each value in citymap.
+        // Note: We scale the area of the circle based on the population.
+        var i = 0;
+        for (var location in path) {
+            // Add the circle for this city to the map.
+      			if (i%40 == 0){
+        				var marker = new google.maps.Marker({
+        		            position: path[location].center,
+        		            map: map,
+        		            icon: icons[n].icon,
+        		            title: path[location].time
+        		    });
+        			  marker.setMap(map);
+      			}
+			      i++
+        }
+
+        // construct path
+        var color = icons[n].icon.fillColor;
+        var flightPath = new google.maps.Polyline({
+            path: pathCord,
+            geodesic: true,
+            strokeColor: color,
+            strokeOpacity: 1,
+            strokeWeight: 1
+        });
+
+        flightPath.setMap(map);
+        document.getElementById("load").disabled = true;
+    }
+
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function handleFileSelect(evt) {
+        loc.length = 0;
+        predicted.length = 0;
+        location_p.length = 0;
+        predicted_p.length = 0;
+
+        var files = evt.target.files; // FileList object
+        file = files[0];
+        filename = file.name.substring(0, file.name.length - 17)
+        // alert(filename)
+
+        var reader = new FileReader();
+        reader.onload = function () {
+            var text = reader.result;
+            var lines = text.split('\n');
+            //alert(lines.length);
+            for (var i = 1; i < lines.length; i++) {
+                if ("#" !== lines[i].trim().charAt(0) && lines[i].trim().length !== 0) {
+                    //console.log(lines[i]);
+                    var values = lines[i].split(',');
+                    loc.push({
+                        center: {lat: parseFloat(values[1]), lng: parseFloat(values[2])},
+                        time: values[0]
+                    });
+                    predicted.push({
+                        center: {lat: parseFloat(values[3]), lng: parseFloat(values[4])},
+                        time: values[0]
+                    });
+                }
+            }
+            console.log("Done");
+
+            location_p = loc.map(function (a) {
+                return a.center
+            });
+
+            predicted_p = predicted.map(function (a) {
+                return a.center
+            });
+
+            document.getElementById("load").disabled = false;
+        };
+        reader.readAsText(file);
+    }
+
+    function loadMap(evt) {
+        //console.log(path);
+        if(document.getElementById("typeWorld").checked) {
+          initWorldMap("map"+w_map_id);
+          updateMap(loc, location_p, 0);
+          updateMap(predicted, predicted_p, 1);
+        } else if (document.getElementById("typeStep").checked) {
+          initStepMap("map"+step_map_id);
+          updateMap(loc, location_p, 0);
+          updateMap(predicted, predicted_p, 2);
+        } else if (document.getElementById("typeStable").checked) {
+          initStableMap("map"+s_map_id);
+          updateMap(loc, location_p, 0);
+          updateMap(predicted, predicted_p, 3);
+        }
+    }
+
+    document.getElementById('files').addEventListener('change', handleFileSelect, false);
+    document.getElementById('load').addEventListener('click', loadMap, false);
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJUVw8yMuyfblsKb50iyx52uP5uFJMobk">
+</script>
+</body>
+</html>
