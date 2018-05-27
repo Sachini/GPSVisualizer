@@ -60,6 +60,8 @@
   <input type="radio" id="typeStep" name="type" value="Step"> Step
   <input type="radio" id="typeWorld" name="type" value="World" checked> World
   <input type="radio" id="typeStable" name="type" value="Stable"> Stable
+  <input type="radio" id="typeFourth" name="type" value="Fourth"> 4
+  <input type="radio" id="typeFive" name="type" value="Fifth"> 5
 </div>
 <div style="width:30%; float: right">
  	<div class="legend" style="color:black">Interval: 2 seconds</div>
@@ -82,6 +84,12 @@
 <div id="stable" style="float:left; width: 100%">
   <div style="float:left; width:3%; height:100%">"Stable"</div>
 </div>
+<div id="fourth" style="float:left; width: 100%">
+  <div style="float:left; width:3%; height:100%">"4"</div>
+</div>
+<div id="five" style="float:left; width: 100%">
+  <div style="float:left; width:3%; height:100%">"5"</div>
+</div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
 </script>
 <script>
@@ -96,9 +104,13 @@
     var w_map_id = 1
     var s_map_id = 1
     var step_map_id = 1
+    var map_4_id = 1
+    var map_5_id = 1
     var worldDiv = document.getElementById("world");
     var stableDiv = document.getElementById("stable");
     var stepDiv = document.getElementById("step");
+    var fourthDiv = document.getElementById("fourth");
+    var fiveDiv = document.getElementById("five");
 
     function initWorldMap(map_name) {
         // Create the map.
@@ -160,13 +172,35 @@
                     strokeWeight: 1,
                     scale: 1.5
                 }
+            },
+            4: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#FF5733',
+                    fillOpacity: 0.6,
+                    strokeColor: '#FF5733',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            },
+            5: {
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#B40A78',
+                    fillOpacity: 0.6,
+                    strokeColor: '#B40A78',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
             }
         };
 
         w_map_id++
     }
 
-    function initStepMap(map_name) {
+    function initSecondaryMap(map_name, parentDiv) {
         // Create the map.
         console.log("Creating Map...");
         console.log(map_name);
@@ -174,30 +208,12 @@
         clone = div.cloneNode(true); // true means clone all childNodes and all event handlers
         clone.style.display = "block";
         clone.id = map_name;
-        stepDiv.appendChild(clone);
+        parentDiv.appendChild(clone);
         map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
             zoom: 15,
             center: loc[0].center,
             mapTypeId: 'terrain'
         });
-        step_map_id++
-    }
-
-    function initStableMap(map_name) {
-        // Create the map.
-        console.log("Creating Map...");
-        console.log(map_name);
-        var div = document.getElementById('other');
-        clone = div.cloneNode(true); // true means clone all childNodes and all event handlers
-        clone.style.display = "block";
-        clone.id = map_name;
-        stableDiv.appendChild(clone);
-        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
-            zoom: 15,
-            center: loc[0].center,
-            mapTypeId: 'terrain'
-        });
-        s_map_id++
     }
 
     function updateMap(path, pathCord, n) {
@@ -293,14 +309,27 @@
           updateMap(loc, location_p, 0);
           updateMap(predicted, predicted_p, 1);
         } else if (document.getElementById("typeStep").checked) {
-          initStepMap("map"+step_map_id);
+          initSecondaryMap("map"+step_map_id, stepDiv);
           updateMap(loc, location_p, 0);
           updateMap(predicted, predicted_p, 2);
+          step_map_id++
         } else if (document.getElementById("typeStable").checked) {
-          initStableMap("map"+s_map_id);
+          initSecondaryMap("map"+s_map_id, stableDiv);
           updateMap(loc, location_p, 0);
           updateMap(predicted, predicted_p, 3);
+          step_map_id++
+        }else if (document.getElementById("typeFourth").checked) {
+          initSecondaryMap("map"+map_4_id, fourthDiv);
+          updateMap(loc, location_p, 0);
+          updateMap(predicted, predicted_p, 4);
+          map_4_id++
+        }else if (document.getElementById("typeFive").checked) {
+          initSecondaryMap("map"+map_5_id, fiveDiv);
+          updateMap(loc, location_p, 0);
+          updateMap(predicted, predicted_p, 5);
+          map_5_id++
         }
+
     }
 
     document.getElementById('files').addEventListener('change', handleFileSelect, false);

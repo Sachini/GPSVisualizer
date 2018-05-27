@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>GPS&Tango</title>
+    <style>
+        /* Always set the map height explicitly to define the size of the div
+         * element that contains the map. */
+        #map {
+            height: 90%;
+            width: 100%;
+        }
+        /* Optional: Makes the sample page fill the window. */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .legend {
+            width:100px;
+            height:20px;
+            border:1px;
+            color: white;
+            float: right
+        }
+    </style>
+</head>
+<body>
+<div>
+<div style="width:50%; float: left">
+    <input type="file" id="files" name="files[]" multiple />
+    <output id="list"></output>
+    <button id="load" disabled>Load</button>
+</div>
+<div style="width:30%; float: left">
+    <div class="legend" style="background:#831958">Tango</div>
+    <div class="legend" style="background:#008000">GPS</div>
+</div>
+</div>
+<div id="map" ></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
+</script>
+<script>
+    var file;
+    var loc = [];
+    var predicted = [];
+    var map;
+    var location_p = [];
+    var predicted_p = [];
+    var icons;
+    var firstCall = 0;
+
+    function initMap() {
+        // Create the map.
+        console.log("Loading Map...");
+        console.log(loc[0].center)
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 30,
+            center: loc[0].center,
+            mapTypeId: 'terrain'
+        });
+
+        icons = {
+            0: {
+                icon:{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#831958',
+                    fillOpacity: 0.6,
+                    strokeColor: '#831958',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            },
+            1: {
+                icon:{
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: '#008000',
+                    fillOpacity: 0.6,
+                    strokeColor: '#008000',
+                    strokeOpacity: 0.9,
+                    strokeWeight: 1,
+                    scale: 1.5
+                }
+            }
+        };
+
+        firstCall = 1;
+
+    }
+
+    function updateCircles(path){
+        // Construct the circle for each value in citymap.
+        // Note: We scale the area of the circle based on the population.
+        var i = 0;
+        for (var location in path) {
+            if (i%40 == 0){
+              // Add the circle for this city to the map.
+              var marker = new google.maps.Marker({
+                  position: path[location].center,
+                  map: map,
+                  icon: icons[1].icon,
+              });
+
+              marker.setMap(map);
+
+              var cityCircle = new google.maps.Circle({
+                  strokeColor: '#0000FF',
+                  strokeOpacity: 0.2,
+                  strokeWeight: 1,
+                  fillColor: '#0000FF',
+                  fillOpacity: 0.05,
+                  map: map,
+                  center: path[location].center,
+                  radius: path[location].accuracy
+              });
+
+              cityCircle.setMap(map);
+            }
+            i++
+        }
+    }
+
+    function updatePath(pathCord, color) {
+      var flightPath = new google.maps.Polyline({
+          path: pathCord,
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 1,
+          strokeWeight: 1
+      });
+
+      flightPath.setMap(map);
+    }
+
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+
+    function handleFileSelect(evt) {
+        loc.length = 0;
+        predicted.length = 0;
+        location_p.length = 0;
+        predicted_p.length = 0;
+
+        var files = evt.target.files; // FileList object
+        file = files[0];
+        filename = file.name.substring(0, file.name.length - 17)
+        // alert(filename)
+
+        var reader = new FileReader();
+        reader.onload = function () {
+            var text = reader.result;
+            var lines = text.split('\n');
+            //alert(lines.length);
+            for (var i = 1; i < lines.length; i++) {
+                if ("#" !== lines[i].trim().charAt(0) && lines[i].trim().length !== 0) {
+                    //console.log(lines[i]);
+                    var values = lines[i].split(',');
+                    loc.push({
+                        center: {lat: parseFloat(values[1]), lng: parseFloat(values[2])},
+                        accuracy: parseFloat(values[5]),
+                        time: values[0]
+                    });
+                    predicted.push({
+                        center: {lat: parseFloat(values[3]), lng: parseFloat(values[4])},
+                        time: values[0]
+                    });
+                }
+            }
+            console.log("Done");
+
+            location_p = loc.map(function (a) {
+                return a.center
+            });
+
+            predicted_p = predicted.map(function (a) {
+                return a.center
+            });
+
+            document.getElementById("load").disabled = false;
+            if (firstCall === 0) {
+                initMap();
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function loadMap(evt){
+      updatePath(location_p, '#008000');
+      updatePath(predicted_p, '#831958');
+      updateCircles(loc);
+    }
+
+    document.getElementById('files').addEventListener('change', handleFileSelect, false);
+    document.getElementById('load').addEventListener('click', loadMap, false);
+
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJUVw8yMuyfblsKb50iyx52uP5uFJMobk">
+</script>
+</body>
+</html>
