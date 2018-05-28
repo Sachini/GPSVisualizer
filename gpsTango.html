@@ -62,6 +62,15 @@
             mapTypeId: 'terrain'
         });
 
+        var style = [{
+                        featureType: "all",
+                        elementType: "labels",
+                        stylers: [
+                          { visibility: "off" }
+                        ]
+                      }]
+        map.set('styles', style)
+        
         icons = {
             0: {
                 icon:{
@@ -91,7 +100,7 @@
 
     }
 
-    function updateCircles(path){
+    function updateCircles(path, num){
         // Construct the circle for each value in citymap.
         // Note: We scale the area of the circle based on the population.
         var i = 0;
@@ -101,7 +110,8 @@
               var marker = new google.maps.Marker({
                   position: path[location].center,
                   map: map,
-                  icon: icons[1].icon,
+                  icon: icons[num].icon,
+                  title: path[location].time
               });
 
               marker.setMap(map);
@@ -197,7 +207,8 @@
     function loadMap(evt){
       updatePath(location_p, '#008000');
       updatePath(predicted_p, '#831958');
-      updateCircles(loc);
+      updateCircles(loc, 1);
+      updateCircles(predicted, 0);
     }
 
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
