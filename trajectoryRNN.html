@@ -53,86 +53,44 @@
     var predicted_p = [];
     var icons;
     var firstCall = 0;
+    var colours = ["#FF0000","#0000FF","#F1C40F", "#8E44AD", "#DC7633", "#3498DB", "#D50EF1 " ];
 
     function initMap() {
         // Create the map.
         console.log("Loading Map...");
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 15,
+            scaleControl: true,
             center: loc[0].center,
             mapTypeId: 'terrain'
         });
 
-        icons = {
-            0: {
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: '#00FF00',
-                    fillOpacity: 0.6,
-                    strokeColor: '#00FF00',
-                    strokeOpacity: 0.9,
-                    strokeWeight: 1,
-                    scale: 1.5
-                }
-            },
-            1: {
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: '#0000FF',
-                    fillOpacity: 0.6,
-                    strokeColor: '#0000FF',
-                    strokeOpacity: 0.9,
-                    strokeWeight: 1,
-                    scale: 1.5
-                }
-            },
-            2: {
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: '#FF0000',
-                    fillOpacity: 0.6,
-                    strokeColor: '#FF0000',
-                    strokeOpacity: 0.9,
-                    strokeWeight: 1,
-                    scale: 1.5
-                }
-            }
-        };
-
-        firstCall = 1;
+        var style = [{
+                        featureType: "all",
+                        elementType: "labels",
+                        stylers: [
+                          { visibility: "off" }
+                        ]
+                      }]
+        map.set('styles', style)
     }
 
     function updateMap(path, pathCord, n) {
         // Construct the circle for each value in citymap.
         // Note: We scale the area of the circle based on the population.
-		var i = 0;
-        for (var location in path) {
-            // Add the circle for this city to the map.
-			if (i%40 == 0){
-				var marker = new google.maps.Marker({
-		            position: path[location].center,
-		            map: map,
-		            icon: icons[n].icon,
-		            title: path[location].time
-		        });
-
-            	marker.setMap(map);
-			}
-			i++
-        }
-
         // construct path
-        var color = icons[n].icon.fillColor;
-        var flightPath = new google.maps.Polyline({
+        var color = colours[firstCall]
+                var flightPath = new google.maps.Polyline({
             path: pathCord,
             geodesic: true,
             strokeColor: color,
             strokeOpacity: 1,
-            strokeWeight: 1
+            strokeWeight: 2
         });
 
         flightPath.setMap(map);
         document.getElementById("load").disabled = true;
+        firstCall++;
     }
 
     function getRandomColor() {
@@ -193,7 +151,9 @@
 
     function loadMap(evt) {
         //console.log(path);
-        updateMap(loc, location_p, 0);
+        if (firstCall === 0){
+          updateMap(loc, location_p, 0);
+        }
         updateMap(predicted, predicted_p, 2);
     }
 

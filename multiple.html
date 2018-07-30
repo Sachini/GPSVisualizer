@@ -93,13 +93,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js">
 </script>
 <script>
-    var file;
-    var filename;
-    var loc = [];
-    var predicted = [];
-    var map;
-    var location_p = [];
-    var predicted_p = [];
     var icons;
     var w_map_id = 1
     var s_map_id = 1
@@ -111,8 +104,9 @@
     var stepDiv = document.getElementById("step");
     var fourthDiv = document.getElementById("fourth");
     var fiveDiv = document.getElementById("five");
+    var ready = true; 
 
-    function initWorldMap(map_name) {
+    function initWorldMap(map_name, loc_center, filename) {
         // Create the map.
         console.log("Creating Map...");
         console.log(map_name);
@@ -122,9 +116,9 @@
         clone.id = map_name;
         worldDiv.appendChild(clone);
         clone.getElementsByClassName("map_name")[0].innerHTML = filename;
-        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
+        var map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
             zoom: 15,
-            center: loc[0].center,
+            center: loc_center,
             mapTypeId: 'terrain'
         });
 
@@ -198,9 +192,11 @@
         };
 
         w_map_id++
+
+		return map
     }
 
-    function initSecondaryMap(map_name, parentDiv) {
+    function initSecondaryMap(map_name, parentDiv, loc_center) {
         // Create the map.
         console.log("Creating Map...");
         console.log(map_name);
@@ -209,14 +205,16 @@
         clone.style.display = "block";
         clone.id = map_name;
         parentDiv.appendChild(clone);
-        map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
+        var map = new google.maps.Map(clone.getElementsByClassName("gmap")[0], {
             zoom: 15,
-            center: loc[0].center,
+            center: loc_center,
             mapTypeId: 'terrain'
         });
+
+		return map
     }
 
-    function updateMap(path, pathCord, n) {
+    function updateMap(map, path, pathCord, n) {
         // Construct the circle for each value in citymap.
         // Note: We scale the area of the circle based on the population.
         var i = 0;
@@ -257,83 +255,96 @@
         return color;
     }
 
-    function handleFileSelect(evt) {
-        loc.length = 0;
-        predicted.length = 0;
-        location_p.length = 0;
-        predicted_p.length = 0;
+    async function handleFileSelect(evt) {
 
         var files = evt.target.files; // FileList object
-        file = files[0];
-        filename = file.name.substring(0, file.name.length - 17)
-        // alert(filename)
-
-        var reader = new FileReader();
-        reader.onload = function () {
-            var text = reader.result;
-            var lines = text.split('\n');
-            //alert(lines.length);
-            for (var i = 1; i < lines.length; i++) {
-                if ("#" !== lines[i].trim().charAt(0) && lines[i].trim().length !== 0) {
-                    //console.log(lines[i]);
-                    var values = lines[i].split(',');
-                    loc.push({
-                        center: {lat: parseFloat(values[1]), lng: parseFloat(values[2])},
-                        time: values[0]
-                    });
-                    predicted.push({
-                        center: {lat: parseFloat(values[3]), lng: parseFloat(values[4])},
-                        time: values[0]
-                    });
-                }
-            }
-            console.log("Done");
-
-            location_p = loc.map(function (a) {
-                return a.center
-            });
-
-            predicted_p = predicted.map(function (a) {
-                return a.center
-            });
-
-            document.getElementById("load").disabled = false;
-        };
-        reader.readAsText(file);
+		console.log(files)
+        
+		for (const file of files){
+			// var file = files[x];
+			ready = false;
+			await process(file);			
+		}
     }
 
-    function loadMap(evt) {
+	function process(file) {
+		var filename = file.name.substring(0, file.name.length - 17)
+
+		var reader = new FileReader();
+		reader.onload = function () {
+			var loc = [];
+			var predicted = [];
+			var location_p = [];
+			var predicted_p = [];
+
+		    var text = reader.result;
+		    var lines = text.split('\n');
+		    //alert(lines.length);
+		    for (var i = 1; i < lines.length; i++) {
+		        if ("#" !== lines[i].trim().charAt(0) && lines[i].trim().length !== 0) {
+		            //console.log(lines[i]);
+		            var values = lines[i].split(',');
+		            loc.push({
+		                center: {lat: parseFloat(values[1]), lng: parseFloat(values[2])},
+		                time: values[0]
+		            });
+		            predicted.push({
+		                center: {lat: parseFloat(values[3]), lng: parseFloat(values[4])},
+		                time: values[0]
+		            });
+		        }
+		    }
+		    console.log(filename, "Done");
+
+		    location_p = loc.map(function (a) {
+		        return a.center
+		    });
+
+		    predicted_p = predicted.map(function (a) {
+		        return a.center
+		    });
+
+		    document.getElementById("load").disabled = false;
+			loadMap(loc.slice(0), predicted.slice(0), location_p.slice(0), predicted_p.slice(0), filename)
+		
+		};
+	
+		reader.readAsText(file);
+		console.log(filename);
+	}
+
+    function loadMap(loc, predicted, location_p, predicted_p, filename) {
         //console.log(path);
         if(document.getElementById("typeWorld").checked) {
-          initWorldMap("map"+w_map_id);
-          updateMap(loc, location_p, 0);
-          updateMap(predicted, predicted_p, 1);
+          var map = initWorldMap("map"+w_map_id, loc[0].center, filename);
+          updateMap(map, loc, location_p, 0);
+          updateMap(map, predicted, predicted_p, 1);
         } else if (document.getElementById("typeStep").checked) {
-          initSecondaryMap("map"+step_map_id, stepDiv);
-          updateMap(loc, location_p, 0);
-          updateMap(predicted, predicted_p, 2);
+          var map =  initSecondaryMap("map"+step_map_id, stepDiv, loc[0].center);
+          updateMap(map, loc, location_p, 0);
+          updateMap(map, predicted, predicted_p, 2);
           step_map_id++
         } else if (document.getElementById("typeStable").checked) {
-          initSecondaryMap("map"+s_map_id, stableDiv);
-          updateMap(loc, location_p, 0);
-          updateMap(predicted, predicted_p, 3);
+          var map =  initSecondaryMap("map"+s_map_id, stableDiv, loc[0].center);
+          updateMap(map, loc, location_p, 0);
+          updateMap(map, predicted, predicted_p, 3);
           step_map_id++
         }else if (document.getElementById("typeFourth").checked) {
-          initSecondaryMap("map"+map_4_id, fourthDiv);
-          updateMap(loc, location_p, 0);
-          updateMap(predicted, predicted_p, 4);
+          var map = initSecondaryMap("map"+map_4_id, fourthDiv, loc[0].center);
+          updateMap(map, loc, location_p, 0);
+          updateMap(map, predicted, predicted_p, 4);
           map_4_id++
         }else if (document.getElementById("typeFive").checked) {
-          initSecondaryMap("map"+map_5_id, fiveDiv);
-          updateMap(loc, location_p, 0);
-          updateMap(predicted, predicted_p, 5);
+          var map = initSecondaryMap("map"+map_5_id, fiveDiv, loc[0].center);
+          updateMap(map, loc, location_p, 0);
+          updateMap(map, predicted, predicted_p, 5);
           map_5_id++
         }
-
+		ready = true;
     }
 
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
-    document.getElementById('load').addEventListener('click', loadMap, false);
+    // document.getElementById('load').addEventListener('click', loadMap, false);
 
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAJUVw8yMuyfblsKb50iyx52uP5uFJMobk">

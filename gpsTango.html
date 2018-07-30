@@ -58,6 +58,7 @@
         console.log(loc[0].center)
         map = new google.maps.Map(document.getElementById('map'), {
             zoom: 30,
+scaleControl: true,
             center: loc[0].center,
             mapTypeId: 'terrain'
         });
@@ -121,7 +122,7 @@
                   strokeOpacity: 0.2,
                   strokeWeight: 1,
                   fillColor: '#0000FF',
-                  fillOpacity: 0.05,
+                  fillOpacity: 0.01,
                   map: map,
                   center: path[location].center,
                   radius: path[location].accuracy
