@@ -104,7 +104,6 @@
     var stepDiv = document.getElementById("step");
     var fourthDiv = document.getElementById("fourth");
     var fiveDiv = document.getElementById("five");
-    var ready = true; 
 
     function initWorldMap(map_name, loc_center, filename) {
         // Create the map.
@@ -257,21 +256,21 @@
 
     async function handleFileSelect(evt) {
 
-        var files = evt.target.files; // FileList object
+        var files = Array.from(evt.target.files)
+		files = files.sort(function(f1, f2){ return f1.name.localeCompare(f2.name);}); // FileList object
 		console.log(files)
         
 		for (const file of files){
 			// var file = files[x];
-			ready = false;
 			await process(file);			
 		}
     }
 
-	function process(file) {
+	async function process(file) {
 		var filename = file.name.substring(0, file.name.length - 17)
 
 		var reader = new FileReader();
-		reader.onload = function () {
+		reader.onload = async function () {
 			var loc = [];
 			var predicted = [];
 			var location_p = [];
@@ -305,11 +304,11 @@
 		    });
 
 		    document.getElementById("load").disabled = false;
-			loadMap(loc.slice(0), predicted.slice(0), location_p.slice(0), predicted_p.slice(0), filename)
+			await loadMap(loc.slice(0), predicted.slice(0), location_p.slice(0), predicted_p.slice(0), filename)
 		
 		};
 	
-		reader.readAsText(file);
+		await reader.readAsText(file);
 		console.log(filename);
 	}
 
@@ -340,7 +339,6 @@
           updateMap(map, predicted, predicted_p, 5);
           map_5_id++
         }
-		ready = true;
     }
 
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
